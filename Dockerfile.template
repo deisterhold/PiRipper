@@ -30,8 +30,8 @@ RUN apt-get update -y \
 
 RUN apt-get install -yq \
     # handbrake-cli \
-    makemkv-bin \
-    makemkv-oss \
+    # makemkv-bin \
+    # makemkv-oss \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
