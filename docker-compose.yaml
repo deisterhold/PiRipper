@@ -11,5 +11,9 @@ services:
   ripper:
     build: ./ripper
     privileged: true
+    devices:
+      - '/dev/sr0:/dev/sr0'
+      - '/dev/cdrom:/dev/cdrom'
+      - '/dev/dvd:/dev/dvd'
     volumes:
       - 'images:/data'
