@@ -3,16 +3,20 @@ FROM balenalib/%%BALENA_MACHINE_NAME%%-ubuntu
 #switch on systemd init system in container
 ENV INITSYSTEM on
 
+# Specify installs as noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
+
 # Install Dependencies
 RUN apt-get update -y \
-    && apt-get install -y software-properties-common \
+    && apt-get install -yq software-properties-common \
     && add-apt-repository ppa:heyarje/makemkv-beta \
     && add-apt-repository ppa:stebbins/handbrake-releases \
-    && apt-get update -y \
-    && apt-get install -y \
-    # abcde \
-    # at \
-    # cdparanoia \
+    && apt-get update -y
+
+RUN apt-get install -yq \
+    abcde \
+    at \
+    cdparanoia \
     # default-jre-headless \
     # flac \
     git \
