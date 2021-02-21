@@ -1,7 +1,7 @@
 FROM balenalib/%%BALENA_MACHINE_NAME%%-ubuntu
 
-#switch on systemd init system in container
-ENV INITSYSTEM on
+# Enable udev events
+ENV UDEV on
 
 # Specify installs as noninteractive
 ARG DEBIAN_FRONTEND=noninteractive
