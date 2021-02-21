@@ -1,0 +1,15 @@
+version: '2'
+volumes:
+  images:
+services:
+  frontend:
+    restart: always
+    build: ./frontend
+    privileged: true
+    depends_on:
+      - ripper
+  ripper:
+    build: ./ripper
+    privileged: true
+    volumes:
+      - 'images:/data'
