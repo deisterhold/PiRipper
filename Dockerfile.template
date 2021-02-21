@@ -1,0 +1,34 @@
+FROM balenalib/%%BALENA_MACHINE_NAME%%-ubuntu
+
+#switch on systemd init system in container
+ENV INITSYSTEM on
+
+# Install Dependencies
+RUN apt-get update -y \
+    && apt-get install -y software-properties-common \
+    && add-apt-repository ppa:heyarje/makemkv-beta \
+    && add-apt-repository ppa:stebbins/handbrake-releases \
+    && apt-get update -y \
+    && apt-get install -y \
+    # abcde \
+    # at \
+    # cdparanoia \
+    # default-jre-headless \
+    # flac \
+    git \
+    # glyrc \
+    # handbrake-cli \
+    # imagemagick \
+    # libavcodec-extra \
+    # libcurl4-openssl-dev \
+    # libdvd-pkg \
+    # libssl-dev \
+    # makemkv-bin \
+    # makemkv-oss \
+    # python3 \
+    # python3-pip \
+    # && dpkg-reconfigure libdvd-pkg \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+CMD ["/bin/sh"]
