@@ -1,20 +1,28 @@
 {
-  "name": "ripper",
-  "version": "0.0.1",
-  "description": "A utility for creating DVD ISO images.",
-  "os": ["linux"],
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "udev": "0.6.0"
-  },
-  "keywords": [
-    "DVD",
-    "ISO"
-  ],
-  "author": "Daniel Eisterhold",
-  "license": "MIT",
-  "private": "true"
+    "name": "ripper",
+    "version": "0.0.1",
+    "description": "A utility for creating DVD ISO images.",
+    "os": [
+        "linux"
+    ],
+    "main": "dist/server.js",
+    "scripts": {
+        "build": "tsc",
+        "serve": "node dist/server.js",
+        "start": "npm run serve"
+    },
+    "dependencies": {
+        "udev": "^0.6.0"
+    },
+    "devDependencies": {
+        "@types/node": "^10.17.54",
+        "typescript": "^4.1.5"
+    },
+    "keywords": [
+        "DVD",
+        "ISO"
+    ],
+    "author": "Daniel Eisterhold",
+    "license": "MIT",
+    "private": "true"
 }

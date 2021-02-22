@@ -1,9 +1,7 @@
-const { exec, spawn } = require('child_process');
-var udev = require('udev');
+import { exec, spawn } from 'child_process';
+import * as udev from 'udev';
 
-
-
-function getDriveStatus(device) {
+function getDriveStatus(device: string = null) {
     const OPEN = 'drive_open';
     const EMPTY = 'drive_empty';
     const LOADING = 'drive_not_ready';
@@ -49,7 +47,6 @@ function getVolumeId() {
 }
 
 function createIso() {
-    exec('');
     // Call dd command
     const dd = spawn('/bin/dd', ['if=', 'of']);
     // If dd doesn't return data in 10s, kill it
@@ -97,13 +94,16 @@ console.log(udev.list()); // this is a long list :)
 
 // Monitor events on the input subsystem until a device is added.
 var monitor = udev.monitor("input");
-monitor.on('add', function (device) {
+
+monitor.on('add', function(device: any) {
     console.log('added ' + device);
     monitor.close() // this closes the monitor
 });
-monitor.on('remove', function (device) {
+
+monitor.on('remove', function (device: any) {
     console.log('removed ' + device);
 });
-monitor.on('change', function (device) {
+
+monitor.on('change', function (device: any) {
     console.log('changed ' + device);
 });

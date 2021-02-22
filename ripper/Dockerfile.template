@@ -8,11 +8,16 @@ RUN apt-get update -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+WORKDIR /root/ripper
+
 # Copy package.json
 COPY package.json package.json
 
 # Install dependencies
 RUN npm install
+
+# Transpile typescript
+RUN npm build
 
 # Use Ubuntu with the latest version of NodeJs
 FROM balenalib/%%BALENA_MACHINE_NAME%%-ubuntu-node:10-run
@@ -35,7 +40,6 @@ RUN apt-get update -y \
 WORKDIR /root/ripper
 
 # Copy the node app
-COPY --from=build ./node_modules ./node_modules
-COPY index.js index.js
+COPY --from=build /root/ripper /root/ripper
 
-CMD ["node", "index.js"]
+CMD ["npm", "run", "start"]
