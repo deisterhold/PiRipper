@@ -1,10 +1,9 @@
 const { exec, spawn } = require('child_process');
-const { stderr } = require('process');
-
+var udev = require('udev');
 
 function getVolumeId() {
-    var promise = new Promise(function(resolve, reject) {
-        exec('ls;isoinfo -d -i /dev/sr0 | grep "Volume id"', function(err, stdout, stderr) {
+    return new Promise(function(resolve, reject) {
+        exec('isoinfo -d -i /dev/sr0 | grep "Volume id"', function(err, stdout, stderr) {
             if (err) {
                 console.error(stderr);
                 reject(err);
@@ -13,8 +12,6 @@ function getVolumeId() {
             resolve(stdout);
         });
     });
-
-    return promise;
 }
 
 function createIso() {
@@ -50,6 +47,22 @@ function createIso() {
     return dd;
 };
 
-var volumeName = await getVolumeId();
+// var volumeName = getVolumeId();
 
-console.log(volumeName);
+// volumeName.then(console.log, console.error);
+
+// Lists every device in the system.
+console.log(udev.list()); // this is a long list :)
+
+// Monitor events on the input subsystem until a device is added.
+var monitor = udev.monitor("input");
+monitor.on('add', function (device) {
+    console.log('added ' + device);
+    monitor.close() // this closes the monitor
+});
+monitor.on('remove', function (device) {
+    console.log('removed ' + device);
+});
+monitor.on('change', function (device) {
+    console.log('changed ' + device);
+});
