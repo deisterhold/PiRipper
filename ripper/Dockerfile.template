@@ -3,6 +3,7 @@ FROM balenalib/%%BALENA_MACHINE_NAME%%-ubuntu-node:10-build as build
 # Install Dependencies
 RUN apt-get update -y \
     && apt-get install -y \
+    python3 \
     libudev-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -24,6 +25,7 @@ RUN apt-get update -y \
     && apt-get install -y \
     genisoimage \
     git \
+    python3 \
     libudev-dev \
     setcd \
     && apt-get clean \

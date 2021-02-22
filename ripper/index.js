@@ -1,6 +1,40 @@
 const { exec, spawn } = require('child_process');
 var udev = require('udev');
 
+
+
+function getDriveStatus(device) {
+    const OPEN = 'drive_open';
+    const EMPTY = 'drive_empty';
+    const LOADING = 'drive_not_ready';
+    const READY = 'drive_ready';
+
+    return new Promise(function(resolve, reject) {
+        exec(`setcd -i ${device || '/dev/sr0'}`, function(err, stdout, stderr) {
+            if (err) {
+                console.error(stderr);
+                reject(err);
+            }
+            
+            stdout = stdout || '';
+
+            if (stdout.indexOf('CD tray is open') !== -1){
+                resolve(OPEN);
+            } else if (stdout.indexOf('Drive is not ready') !== -1){
+                resolve(LOADING);
+            } else if (stdout.indexOf('Disc found in drive') !== -1){
+                resolve(READY);
+            } else if (stdout.indexOf('No disc is inserted') !== -1){
+                resolve(EMPTY);
+            } else {
+                resolve(null);
+            }
+
+            resolve(stdout);
+        });
+    });
+}
+
 function getVolumeId() {
     return new Promise(function(resolve, reject) {
         exec('isoinfo -d -i /dev/sr0 | grep "Volume id"', function(err, stdout, stderr) {
@@ -50,6 +84,13 @@ function createIso() {
 // var volumeName = getVolumeId();
 
 // volumeName.then(console.log, console.error);
+
+// Drive status
+var driveCheck = setInterval(function () {
+    var driveStat = getDriveStatus();
+
+    driveStat.then(console.log, console.error);
+}, 30000);
 
 // Lists every device in the system.
 console.log(udev.list()); // this is a long list :)
