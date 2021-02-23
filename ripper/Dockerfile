@@ -1,4 +1,4 @@
-FROM balenalib/%%BALENA_MACHINE_NAME%%-ubuntu-node:10-build as build
+FROM balenalib/raspberrypi3-64-ubuntu-node:10-build as build
 
 # Install Dependencies
 RUN apt-get update -y \
@@ -27,7 +27,7 @@ COPY ./src ./src
 RUN npm run build
 
 # Use Ubuntu with the latest version of NodeJs
-FROM balenalib/%%BALENA_MACHINE_NAME%%-ubuntu-node:10-run
+FROM balenalib/raspberrypi3-64-ubuntu-node:10-run
 
 # Enable udev events
 ENV UDEV on

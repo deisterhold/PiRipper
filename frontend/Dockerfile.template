@@ -1,3 +1,0 @@
-FROM balenablocks/browser:%%BALENA_MACHINE_NAME%%
-
-ENV LAUNCH_URL=https://apple.com
