@@ -35,8 +35,8 @@ ENV UDEV on
 # Install Dependencies
 RUN apt-get update -y \
     && apt-get install -y \
+    eject \
     genisoimage \
-    git \
     python3 \
     libudev-dev \
     setcd \
