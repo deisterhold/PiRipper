@@ -94,11 +94,8 @@ var driveCheck = setInterval(function () {
     driveStat.then(console.log, console.error);
 }, 30000);
 
-// Lists every device in the system.
-console.log(udev.list()); // this is a long list :)
-
-// Monitor events on the input subsystem until a device is added.
-var monitor = udev.monitor("input");
+// Monitor events on the scis subsystem until a device is added.
+var monitor = udev.monitor("scis");
 
 monitor.on('add', function(device: any) {
     console.log('added ' + device);

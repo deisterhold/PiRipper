@@ -11,13 +11,17 @@ RUN apt-get update -y \
 WORKDIR /root/ripper
 
 # Copy package.json
-COPY package*.json ./
+COPY package.json package.json
+COPY package-lock.json package-lock.json
 
 # Install dependencies
 RUN npm install
 
+# Copy tsconfig source
+COPY tsconfig.json tsconfig.json
+
 # Copy typescript source
-COPY . .
+COPY ./src ./src
 
 # Transpile typescript
 RUN npm run build
