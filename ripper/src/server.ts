@@ -1,5 +1,6 @@
-import { exec, execSync } from 'child_process';
+import { exec } from 'child_process';
 import { existsSync, mkdirSync } from 'fs';
+import * as process from 'process';
 import { join } from 'path';
 
 enum DriveStatus {
@@ -127,10 +128,15 @@ function waitForDrive(): Promise<void> {
     });
 }
 
-async function process(): Promise<void> {
+async function runProgram(): Promise<void> {
     const outputDir = '/data/iso';
 
     var exit = false;
+
+    process.on('SIGINT', function() {
+        console.log('Exiting...please wait.');
+        exit = true;
+    });
 
     // Create output folder if it doesn't exist
     if (!existsSync(outputDir)) {
@@ -161,4 +167,4 @@ async function process(): Promise<void> {
     }
 }
 
-process();
+runProgram();
