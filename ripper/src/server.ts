@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
@@ -57,7 +57,6 @@ function getDriveStatus(device: string = null): Promise<DriveStatus> {
     return new Promise<DriveStatus>(function (resolve, reject) {
         exec(`setcd -i ${device || '/dev/sr0'}`, function (err, stdout, stderr) {
             if (err) {
-                console.error(stderr);
                 reject(err);
             }
 
@@ -82,13 +81,24 @@ function getVolumeName(): Promise<string> {
     return new Promise(function (resolve, reject) {
         exec('isoinfo -d -i /dev/sr0 | grep "Volume id"', function (err, stdout, stderr) {
             if (err) {
-                console.error(stderr);
                 reject(err);
             }
 
             var name = (stdout || '').replace('Volume id: ', '').trim();
 
             resolve(name);
+        });
+    });
+}
+
+function openDrive(): Promise<void> {
+    return new Promise(function (resolve, reject) {
+        exec('eject', function (err, _, stderr) {
+            if (err) {
+                reject(err);
+            }
+
+            resolve();
         });
     });
 }
@@ -136,7 +146,12 @@ async function process(): Promise<void> {
             const volumeName = await getVolumeName();
             const outputPath = join(outputDir, `${volumeName}.iso`);
 
-            console.log(`Creating ISO at: ${outputPath}`);
+            console.log(`Creating ISO at: '${outputPath}'.`);
+            
+            // TODO: Create ISO image and send off for processing
+
+            console.log('Ejecting DVD drive.');
+            await openDrive();
         } catch (error) {
             console.error(error);
             exit = true;
