@@ -1,5 +1,10 @@
 import { exec, spawn } from 'child_process';
-import * as udev from 'udev';
+import { platform } from 'os';
+
+let udev: any;
+if (platform() == 'linux'){
+    udev = require('udev');
+}
 
 function getDriveStatus(device: string = null) {
     const OPEN = 'drive_open';
