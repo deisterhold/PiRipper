@@ -1,51 +1,12 @@
-import { exec, spawn } from 'child_process';
-import { stat } from 'fs';
+import { exec } from 'child_process';
+import { existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
 
 enum DriveStatus {
     Open = 'drive_open',
     Loading = 'drive_not_ready',
     Ready = 'drive_ready',
     Empty = 'drive_empty'
-}
-
-function getDriveStatus(device: string = null): Promise<DriveStatus> {
-    return new Promise<DriveStatus>(function (resolve, reject) {
-        exec(`setcd -i ${device || '/dev/sr0'}`, function (err, stdout, stderr) {
-            if (err) {
-                console.error(stderr);
-                reject(err);
-            }
-
-            status = stdout || '';
-
-            if (status.indexOf('CD tray is open') !== -1) {
-                resolve(DriveStatus.Open);
-            } else if (status.indexOf('Drive is not ready') !== -1) {
-                resolve(DriveStatus.Loading);
-            } else if (status.indexOf('Disc found in drive') !== -1) {
-                resolve(DriveStatus.Ready);
-            } else if (status.indexOf('No disc is inserted') !== -1) {
-                resolve(DriveStatus.Empty);
-            } else {
-                reject(new Error(`Unrecognized drive status: ${status}`));
-            }
-        });
-    });
-}
-
-function getVolumeId() {
-    return new Promise(function (resolve, reject) {
-        exec('isoinfo -d -i /dev/sr0 | grep "Volume id"', function (err, stdout, stderr) {
-            if (err) {
-                console.error(stderr);
-                reject(err);
-            }
-
-            var name = (stdout || '').replace('Volume id: ', '').trim();
-
-            resolve(name);
-        });
-    });
 }
 
 // function createIso(outputPath: string) {
@@ -86,6 +47,52 @@ function getVolumeId() {
 
 // Drive status
 
+function delay(ms: number): Promise<void> {
+    return new Promise(function(resolve, _) {
+        setTimeout(resolve, ms);
+    });
+}
+
+function getDriveStatus(device: string = null): Promise<DriveStatus> {
+    return new Promise<DriveStatus>(function (resolve, reject) {
+        exec(`setcd -i ${device || '/dev/sr0'}`, function (err, stdout, stderr) {
+            if (err) {
+                console.error(stderr);
+                reject(err);
+            }
+
+            const status = stdout || '';
+
+            if (status.indexOf('CD tray is open') !== -1) {
+                resolve(DriveStatus.Open);
+            } else if (status.indexOf('Drive is not ready') !== -1) {
+                resolve(DriveStatus.Loading);
+            } else if (status.indexOf('Disc found in drive') !== -1) {
+                resolve(DriveStatus.Ready);
+            } else if (status.indexOf('No disc is inserted') !== -1) {
+                resolve(DriveStatus.Empty);
+            } else {
+                reject(new Error(`Unrecognized drive status: ${status}`));
+            }
+        });
+    });
+}
+
+function getVolumeName(): Promise<string> {
+    return new Promise(function (resolve, reject) {
+        exec('isoinfo -d -i /dev/sr0 | grep "Volume id"', function (err, stdout, stderr) {
+            if (err) {
+                console.error(stderr);
+                reject(err);
+            }
+
+            var name = (stdout || '').replace('Volume id: ', '').trim();
+
+            resolve(name);
+        });
+    });
+}
+
 function waitForDrive(): Promise<void> {
     const delay = 5000;
 
@@ -111,11 +118,31 @@ function waitForDrive(): Promise<void> {
 }
 
 async function process(): Promise<void> {
+    const outputDir = '/data/iso';
+
     var exit = false;
 
+    // Create output folder if it doesn't exist
+    if (!existsSync(outputDir)) {
+        console.log('Creating output directory.');
+        mkdirSync(outputDir);
+    }
+
     while (!exit) {
-        await waitForDrive();
-        console.log('Drive is ready for ripping.');
+        try {
+            await waitForDrive();
+            console.log('Drive is ready for ripping.');
+
+            const volumeName = await getVolumeName();
+            const outputPath = join(outputDir, `${volumeName}.iso`);
+
+            console.log(`Creating ISO at: ${outputPath}`);
+        } catch (error) {
+            console.error(error);
+            exit = true;
+        }
+
+        await delay(30000);
     }
 }
 
