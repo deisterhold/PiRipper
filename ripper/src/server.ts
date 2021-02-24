@@ -10,44 +10,6 @@ enum DriveStatus {
     Empty = 'drive_empty'
 }
 
-// function createIso(outputPath: string) {
-//     // Call dd command
-//     const dd = spawn('/bin/dd', ['if=', 'of']);
-//     // If dd doesn't return data in 10s, kill it
-//     const timeout = setTimeout(function(){
-//         console.log('Command timed out...killing.');
-//         dd.kill();
-//     }, 10000);
-
-//     dd.stdout.on('data', data => {
-//         clearTimeout(timeout);
-//         console.log(`stdout: ${data}`);
-//     });
-
-//     dd.stderr.on('data', data => {
-//         clearTimeout(timeout);
-//         console.log(`stderr: ${data}`);
-//     });
-
-//     dd.on('error', (error) => {
-//         clearTimeout(timeout);
-//         console.log(`error: ${error.message}`);
-//     });
-
-//     dd.on('close', code => {
-//         clearTimeout(timeout);
-//         console.log(`child process exited with code ${code}`);
-//     });
-
-//     return dd;
-// };
-
-// var volumeName = getVolumeId();
-
-// volumeName.then(console.log, console.error);
-
-// Drive status
-
 function delay(ms: number): Promise<void> {
     return new Promise(function (resolve, _) {
         setTimeout(resolve, ms);
@@ -218,6 +180,7 @@ async function runProgram(): Promise<void> {
     let attempt = 0;
 
     while (!exit) {
+        exit = true;
         try {
             await waitForDrive();
             console.log('Drive is ready for ripping.');
@@ -238,7 +201,7 @@ async function runProgram(): Promise<void> {
             // TODO: Notify other process of ISO image
 
             console.log('Ejecting DVD drive.');
-            await openDrive();
+            // await openDrive();
         } catch (error) {
             console.error(error);
             exit = true;
