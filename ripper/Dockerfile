@@ -47,6 +47,9 @@ RUN apt-get update -y \
 # Add user for VLC to run under
 RUN useradd -m vlcplayer
 
+# Allow the user access to the drive
+RUN usermod -a -G cdrom vlcplayer
+
 # Set the app directory
 WORKDIR /root/ripper
 
