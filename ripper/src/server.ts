@@ -166,10 +166,10 @@ async function runProgram(): Promise<void> {
 
     var exit = false;
 
-    process.on('SIGINT', function () {
-        console.log('Exiting...please wait.');
-        exit = true;
-    });
+    // process.on('SIGINT', function () {
+    //     console.log('Exiting...please wait.');
+    //     exit = true;
+    // });
 
     // Create output folder if it doesn't exist
     if (!existsSync(outputDir)) {
