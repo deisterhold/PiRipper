@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { exec, execSync, spawn } from 'child_process';
 import { existsSync, mkdirSync } from 'fs';
 import * as process from 'process';
 import { join } from 'path';
@@ -49,8 +49,48 @@ enum DriveStatus {
 // Drive status
 
 function delay(ms: number): Promise<void> {
-    return new Promise(function(resolve, _) {
+    return new Promise(function (resolve, _) {
         setTimeout(resolve, ms);
+    });
+}
+
+function createIsoImage(outputPath: string, blockSize: number, volumeSize: number): Promise<boolean> {
+    return new Promise(function (resolve, reject) {
+        const device = '/dev/sr0';
+
+        // Open VLC for a short amount of time to allow access to the DVD
+        execSync(`cvlc --run-time 6 --start-time 16 ${device} vlc://quit`);
+
+        // Call dd command
+        const dd = spawn('/bin/dd', [`if=${device}`, `of=${outputPath}`, `bs=${blockSize}`, `count=${volumeSize}`]);
+
+        // If dd doesn't return data in 10s, kill it
+        const timeout = setTimeout(function () {
+            console.log('Command timed out...killing.');
+            dd.kill();
+        }, 10000);
+
+        dd.stdout.on('data', data => {
+            clearTimeout(timeout);
+            console.log(`stdout: ${data}`);
+        });
+
+        dd.stderr.on('data', data => {
+            clearTimeout(timeout);
+            console.log(`stderr: ${data}`);
+        });
+
+        dd.on('error', (error) => {
+            clearTimeout(timeout);
+            console.log(`error: ${error.message}`);
+            reject(error);
+        });
+
+        dd.on('close', code => {
+            clearTimeout(timeout);
+            console.log(`child process exited with code ${code}`);
+            resolve(code === 0);
+        });
     });
 }
 
@@ -78,23 +118,54 @@ function getDriveStatus(device: string = null): Promise<DriveStatus> {
     });
 }
 
-function getVolumeName(): Promise<string> {
+function getVolumeLogicalBlockSize(): Promise<number> {
     return new Promise(function (resolve, reject) {
-        exec('isoinfo -d -i /dev/sr0 | grep "Volume id"', function (err, stdout, stderr) {
+        const filter = 'Logical block size is:';
+        exec(`isoinfo -d -i /dev/sr0 | grep "${filter}"`, function (err, stdout, stderr) {
             if (err) {
                 reject(err);
             }
 
-            var name = (stdout || '').replace('Volume id: ', '').trim();
+            var size = parseInt((stdout || '').replace(filter, '').trim(), 10);
+
+            resolve(size);
+        });
+    });
+}
+
+function getVolumeName(): Promise<string> {
+    return new Promise(function (resolve, reject) {
+        const filter = 'Volume id:';
+        exec(`isoinfo -d -i /dev/sr0 | grep "${filter}"`, function (err, stdout, stderr) {
+            if (err) {
+                reject(err);
+            }
+
+            var name = (stdout || '').replace(filter, '').trim();
 
             resolve(name);
         });
     });
 }
 
+function getVolumeSize(): Promise<number> {
+    return new Promise(function (resolve, reject) {
+        const filter = 'Volume size is:';
+        exec(`isoinfo -d -i /dev/sr0 | grep "${filter}"`, function (err, stdout, stderr) {
+            if (err) {
+                reject(err);
+            }
+
+            var size = parseInt((stdout || '').replace(filter, '').trim(), 10);
+
+            resolve(size);
+        });
+    });
+}
+
 function openDrive(): Promise<void> {
     return new Promise(function (resolve, reject) {
-        exec('eject', function (err, _, stderr) {
+        exec('eject', function (err, _, __) {
             if (err) {
                 reject(err);
             }
@@ -133,7 +204,7 @@ async function runProgram(): Promise<void> {
 
     var exit = false;
 
-    process.on('SIGINT', function() {
+    process.on('SIGINT', function () {
         console.log('Exiting...please wait.');
         exit = true;
     });
@@ -144,17 +215,27 @@ async function runProgram(): Promise<void> {
         mkdirSync(outputDir);
     }
 
+    let attempt = 0;
+
     while (!exit) {
         try {
             await waitForDrive();
             console.log('Drive is ready for ripping.');
 
+            const blockSize = await getVolumeLogicalBlockSize();
             const volumeName = await getVolumeName();
+            const volumeSize = await getVolumeSize();
             const outputPath = join(outputDir, `${volumeName}.iso`);
-
             console.log(`Creating ISO at: '${outputPath}'.`);
-            
-            // TODO: Create ISO image and send off for processing
+
+            const success = await createIsoImage(outputPath, blockSize, volumeSize);
+            if (success) {
+                console.log(`Success: Finished creating ISO.`);
+            } else {
+                console.log(`Finished creating ISO.`);
+            }
+    
+            // TODO: Notify other process of ISO image
 
             console.log('Ejecting DVD drive.');
             await openDrive();

@@ -37,8 +37,9 @@ RUN apt-get update -y \
     && apt-get install -y \
     eject \
     genisoimage \
-    python3 \
     libudev-dev \
+    python3 \
+    vlc \
     setcd \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
