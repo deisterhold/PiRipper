@@ -59,7 +59,7 @@ function createIsoImage(outputPath: string, blockSize: number, volumeSize: numbe
         const device = '/dev/sr0';
 
         // Open VLC for a short amount of time to allow access to the DVD
-        execSync(`cvlc --run-time 6 --start-time 16 ${device} vlc://quit`);
+        execSync(`su vlcplayer -c "cvlc --run-time 6 --start-time 16 ${device} vlc://quit"`)
 
         // Call dd command
         const dd = spawn('/bin/dd', [`if=${device}`, `of=${outputPath}`, `bs=${blockSize}`, `count=${volumeSize}`]);

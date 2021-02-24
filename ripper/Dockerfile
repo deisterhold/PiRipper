@@ -44,6 +44,9 @@ RUN apt-get update -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Add user for VLC to run under
+RUN useradd -m vlcplayer
+
 # Set the app directory
 WORKDIR /root/ripper
 
