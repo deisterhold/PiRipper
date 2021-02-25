@@ -21,9 +21,11 @@ function createIsoImage(outputPath: string, blockSize: number, volumeSize: numbe
         const device = '/dev/sr0';
 
         // Open VLC for a short amount of time to allow access to the DVD
+        console.log('Starting VLC player.');
         execSync(`su vlcplayer -c "cvlc --run-time 6 --start-time 16 ${device} vlc://quit"`)
 
         // Call dd command
+        console.log('Running dd command.');
         const dd = spawn('/bin/dd', [`if=${device}`, `of=${outputPath}`, `bs=${blockSize}`, `count=${volumeSize}`]);
 
         // If dd doesn't return data in 10s, kill it
@@ -34,23 +36,23 @@ function createIsoImage(outputPath: string, blockSize: number, volumeSize: numbe
 
         dd.stdout.on('data', data => {
             clearTimeout(timeout);
-            console.log(`stdout: ${data}`);
+            console.log(`ddstdout: ${data}`);
         });
 
         dd.stderr.on('data', data => {
             clearTimeout(timeout);
-            console.log(`stderr: ${data}`);
+            console.log(`dd stderr: ${data}`);
         });
 
         dd.on('error', (error) => {
             clearTimeout(timeout);
-            console.log(`error: ${error.message}`);
+            console.log(`dd error: ${error.message}`);
             reject(error);
         });
 
         dd.on('close', code => {
             clearTimeout(timeout);
-            console.log(`child process exited with code ${code}`);
+            console.log(`dd exited with code ${code}`);
             resolve(code === 0);
         });
     });
