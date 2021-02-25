@@ -1,4 +1,4 @@
-FROM balenalib/raspberrypi3-64-ubuntu-node:10-build as build
+FROM balenalib/raspberrypi3-64-ubuntu-node:14-build as build
 
 # Install Dependencies
 RUN apt-get update -y \
@@ -27,20 +27,24 @@ COPY ./src ./src
 RUN npm run build
 
 # Use Ubuntu with the latest version of NodeJs
-FROM balenalib/raspberrypi3-64-ubuntu-node:10-run
+FROM balenalib/raspberrypi3-64-ubuntu-node:14-run
 
 # Enable udev events
 ENV UDEV on
 
+ARG DEBIAN_FRONTEND=noninteractive
+
 # Install Dependencies
 RUN apt-get update -y \
-    && apt-get install -y \
+    && apt-get install -yq \
     eject \
     genisoimage \
+    libdvd-pkg \
     libudev-dev \
     python3 \
     vlc \
     setcd \
+    && dpkg-reconfigure libdvd-pkg \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

@@ -11,9 +11,7 @@
         "serve": "node dist/server.js",
         "start": "npm run serve"
     },
-    "dependencies": {
-        "udev": "^0.6.0"
-    },
+    "dependencies": {},
     "devDependencies": {
         "@types/node": "^10.17.54",
         "typescript": "^4.1.5"
