@@ -37,6 +37,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Install Dependencies
 RUN apt-get update -y \
     && apt-get install -yq \
+    cifs-utils \
     eject \
     genisoimage \
     mplayer \
@@ -54,6 +55,9 @@ RUN useradd -m vlcplayer
 
 # Allow the user access to the drive
 RUN usermod -a -G cdrom vlcplayer
+
+# Disable LIRC
+RUN echo "nolirc=yes" >> /etc/mplayer/mplayer.conf
 
 # Set the app directory
 WORKDIR /root/ripper
