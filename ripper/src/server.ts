@@ -1,5 +1,5 @@
 import { exec, execSync, spawn } from 'child_process';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import * as process from 'process';
 import { join } from 'path';
 
@@ -16,17 +16,8 @@ function delay(ms: number): Promise<void> {
     });
 }
 
-function createIsoImage(outputPath: string, blockSize: number, volumeSize: number): Promise<boolean> {
+function createMpg(outputPath: string): Promise<boolean> {
     return new Promise(function (resolve, reject) {
-        const device = '/dev/sr0';
-
-        // Open VLC for a short amount of time to allow access to the DVD
-        // console.log('Starting VLC player.');
-        // execSync(`su vlcplayer -c "cvlc --run-time 6 --start-time 16 /dev/sr0 vlc://quit"`)
-
-        // Call dd command
-        // console.log('Running dd command.');
-        // const dd = spawn('/bin/dd', [`if=${device}`, `of=${outputPath}`, `bs=${blockSize}`, `count=${volumeSize}`]);
         console.log('Starting mplayer...');
         const mplayer = spawn('/usr/bin/mplayer', ['-dumpstream', 'dvd://', '-nocache', '-noidx', '-dumpfile', outputPath]);
              
@@ -38,12 +29,12 @@ function createIsoImage(outputPath: string, blockSize: number, volumeSize: numbe
 
         mplayer.stdout.on('data', data => {
             clearTimeout(timeout);
-            console.log(`mplayer stdout: ${data}`);
+            console.log(data);
         });
 
         mplayer.stderr.on('data', data => {
             clearTimeout(timeout);
-            console.log(`mplayer stderr: ${data}`);
+            console.error(data);
         });
 
         mplayer.on('error', (error) => {
@@ -84,21 +75,6 @@ function getDriveStatus(device: string = null): Promise<DriveStatus> {
     });
 }
 
-function getVolumeLogicalBlockSize(): Promise<number> {
-    return new Promise(function (resolve, reject) {
-        const filter = 'Logical block size is:';
-        exec(`isoinfo -d -i /dev/sr0 | grep "${filter}"`, function (err, stdout, stderr) {
-            if (err) {
-                reject(err);
-            }
-
-            var size = parseInt((stdout || '').replace(filter, '').trim(), 10);
-
-            resolve(size);
-        });
-    });
-}
-
 function getVolumeName(): Promise<string> {
     return new Promise(function (resolve, reject) {
         const filter = 'Volume id:';
@@ -110,21 +86,6 @@ function getVolumeName(): Promise<string> {
             var name = (stdout || '').replace(filter, '').trim();
 
             resolve(name);
-        });
-    });
-}
-
-function getVolumeSize(): Promise<number> {
-    return new Promise(function (resolve, reject) {
-        const filter = 'Volume size is:';
-        exec(`isoinfo -d -i /dev/sr0 | grep "${filter}"`, function (err, stdout, stderr) {
-            if (err) {
-                reject(err);
-            }
-
-            var size = parseInt((stdout || '').replace(filter, '').trim(), 10);
-
-            resolve(size);
         });
     });
 }
@@ -166,7 +127,7 @@ function waitForDrive(): Promise<void> {
 }
 
 async function runProgram(): Promise<void> {
-    const outputDir = '/data/iso';
+    const outputDir = '/data/mpg';
 
     var exit = false;
 
@@ -189,23 +150,26 @@ async function runProgram(): Promise<void> {
             await waitForDrive();
             console.log('Drive is ready for ripping.');
 
-            const blockSize = await getVolumeLogicalBlockSize();
             const volumeName = await getVolumeName();
-            const volumeSize = await getVolumeSize();
             const outputPath = join(outputDir, `${volumeName}.mpg`);
-            console.log(`Creating ISO at: '${outputPath}'.`);
+            console.log(`Creating MPG at: '${outputPath}'.`);
 
-            const success = await createIsoImage(outputPath, blockSize, volumeSize);
+            if (existsSync(outputPath)) {
+                console.log('File already exists. Deleting...');
+                unlinkSync(outputPath);
+            }
+
+            const success = await createMpg(outputPath);
             if (success) {
-                console.log(`Success: Finished creating ISO.`);
+                console.log(`Success: Finished creating MPG.`);
             } else {
-                console.log(`Finished creating ISO.`);
+                console.log(`Finished creating MPG.`);
             }
     
-            // TODO: Notify other process of ISO image
+            // TODO: Notify other process of MPG image
 
             console.log('Ejecting DVD drive.');
-            // await openDrive();
+            await openDrive();
         } catch (error) {
             console.error(error);
             exit = true;

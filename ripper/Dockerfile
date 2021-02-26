@@ -65,5 +65,4 @@ WORKDIR /root/ripper
 # Copy the node app
 COPY --from=build /root/ripper /root/ripper
 
-# CMD ["npm", "run", "start"]
-CMD [ "/bin/sh" ]
+CMD ["npm", "run", "start"]
