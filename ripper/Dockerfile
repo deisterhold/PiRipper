@@ -39,6 +39,7 @@ RUN apt-get update -y \
     && apt-get install -yq \
     eject \
     genisoimage \
+    mplayer \
     libdvd-pkg \
     libudev-dev \
     python3 \
