@@ -21,38 +21,40 @@ function createIsoImage(outputPath: string, blockSize: number, volumeSize: numbe
         const device = '/dev/sr0';
 
         // Open VLC for a short amount of time to allow access to the DVD
-        console.log('Starting VLC player.');
-        execSync(`su vlcplayer -c "cvlc --run-time 6 --start-time 16 ${device} vlc://quit"`)
+        // console.log('Starting VLC player.');
+        // execSync(`su vlcplayer -c "cvlc --run-time 6 --start-time 16 /dev/sr0 vlc://quit"`)
 
         // Call dd command
-        console.log('Running dd command.');
-        const dd = spawn('/bin/dd', [`if=${device}`, `of=${outputPath}`, `bs=${blockSize}`, `count=${volumeSize}`]);
-
+        // console.log('Running dd command.');
+        // const dd = spawn('/bin/dd', [`if=${device}`, `of=${outputPath}`, `bs=${blockSize}`, `count=${volumeSize}`]);
+        console.log('Starting mplayer...');
+        const mplayer = spawn('/usr/bin/mplayer', ['-dumpstream', 'dvd://', '-nocache', '-noidx', '-dumpfile', outputPath]);
+             
         // If dd doesn't return data in 10s, kill it
         const timeout = setTimeout(function () {
             console.log('Command timed out...killing.');
-            dd.kill();
+            mplayer.kill();
         }, 10000);
 
-        dd.stdout.on('data', data => {
+        mplayer.stdout.on('data', data => {
             clearTimeout(timeout);
-            console.log(`ddstdout: ${data}`);
+            console.log(`mplayer stdout: ${data}`);
         });
 
-        dd.stderr.on('data', data => {
+        mplayer.stderr.on('data', data => {
             clearTimeout(timeout);
-            console.log(`dd stderr: ${data}`);
+            console.log(`mplayer stderr: ${data}`);
         });
 
-        dd.on('error', (error) => {
+        mplayer.on('error', (error) => {
             clearTimeout(timeout);
-            console.log(`dd error: ${error.message}`);
+            console.log(`mplayer error: ${error.message}`);
             reject(error);
         });
 
-        dd.on('close', code => {
+        mplayer.on('close', code => {
             clearTimeout(timeout);
-            console.log(`dd exited with code ${code}`);
+            console.log(`mplayer exited with code ${code}`);
             resolve(code === 0);
         });
     });
@@ -190,7 +192,7 @@ async function runProgram(): Promise<void> {
             const blockSize = await getVolumeLogicalBlockSize();
             const volumeName = await getVolumeName();
             const volumeSize = await getVolumeSize();
-            const outputPath = join(outputDir, `${volumeName}.iso`);
+            const outputPath = join(outputDir, `${volumeName}.mpg`);
             console.log(`Creating ISO at: '${outputPath}'.`);
 
             const success = await createIsoImage(outputPath, blockSize, volumeSize);
