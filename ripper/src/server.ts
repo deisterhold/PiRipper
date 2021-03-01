@@ -25,7 +25,7 @@ function createMpg(outputPath: string): Promise<boolean> {
         const timeout = setTimeout(function () {
             console.log('Command timed out...killing.');
             mplayer.kill();
-        }, 10000);
+        }, 30_000);
 
         mplayer.stdout.on('data', data => {
             clearTimeout(timeout);
@@ -162,14 +162,13 @@ async function runProgram(): Promise<void> {
             const success = await createMpg(outputPath);
             if (success) {
                 console.log(`Success: Finished creating MPG.`);
+                await delay(1000);
+                // TODO: Notify other process of MPG image
+                console.log('Ejecting DVD drive.');
+                await openDrive();
             } else {
-                console.log(`Finished creating MPG.`);
+                console.log(`Failed: Finished creating MPG.`);
             }
-    
-            // TODO: Notify other process of MPG image
-
-            console.log('Ejecting DVD drive.');
-            await openDrive();
         } catch (error) {
             console.error(error);
             exit = true;
