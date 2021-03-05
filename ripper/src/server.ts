@@ -27,14 +27,22 @@ function createMpg(outputPath: string): Promise<boolean> {
             mplayer.kill();
         }, 30_000);
 
-        mplayer.stdout.on('data', data => {
+        mplayer.stdout.on('data', (data: Buffer | string | any) => {
             clearTimeout(timeout);
-            console.log(data);
+            if (Buffer.isBuffer(data)) {
+                console.log(data.toString('utf8'));
+            } else {
+                console.log(data);
+            }
         });
 
-        mplayer.stderr.on('data', data => {
+        mplayer.stderr.on('data', (data: Buffer | string | any) => {
             clearTimeout(timeout);
-            console.error(data);
+            if (Buffer.isBuffer(data)) {
+                console.log(data.toString('utf8'));
+            } else {
+                console.log(data);
+            }
         });
 
         mplayer.on('error', (error) => {
