@@ -1,6 +1,5 @@
-import { exec, execSync, spawn } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
-import * as process from 'process';
 import { join } from 'path';
 
 enum DriveStatus {
@@ -11,7 +10,7 @@ enum DriveStatus {
 }
 
 function delay(ms: number): Promise<void> {
-    return new Promise(function (resolve, _) {
+    return new Promise(function (resolve) {
         setTimeout(resolve, ms);
     });
 }
@@ -20,14 +19,14 @@ function createMpg(outputPath: string): Promise<boolean> {
     return new Promise(function (resolve, reject) {
         console.log('Starting mplayer...');
         const mplayer = spawn('/usr/bin/mplayer', ['-dumpstream', 'dvd://', '-nocache', '-noidx', '-dumpfile', outputPath]);
-             
+
         // If dd doesn't return data in 10s, kill it
         const timeout = setTimeout(function () {
             console.log('Command timed out...killing.');
             mplayer.kill();
         }, 30_000);
 
-        mplayer.stdout.on('data', (data: Buffer | string | any) => {
+        mplayer.stdout.on('data', (data: Buffer | string) => {
             clearTimeout(timeout);
             if (Buffer.isBuffer(data)) {
                 console.log(data.toString('utf8'));
@@ -36,7 +35,7 @@ function createMpg(outputPath: string): Promise<boolean> {
             }
         });
 
-        mplayer.stderr.on('data', (data: Buffer | string | any) => {
+        mplayer.stderr.on('data', (data: Buffer | string) => {
             clearTimeout(timeout);
             if (Buffer.isBuffer(data)) {
                 console.log(data.toString('utf8'));
@@ -61,7 +60,7 @@ function createMpg(outputPath: string): Promise<boolean> {
 
 function getDriveStatus(device: string = null): Promise<DriveStatus> {
     return new Promise<DriveStatus>(function (resolve, reject) {
-        exec(`setcd -i ${device || '/dev/sr0'}`, function (err, stdout, stderr) {
+        exec(`setcd -i ${device || '/dev/sr0'}`, function (err, stdout) {
             if (err) {
                 reject(err);
             }
@@ -86,12 +85,12 @@ function getDriveStatus(device: string = null): Promise<DriveStatus> {
 function getVolumeName(): Promise<string> {
     return new Promise(function (resolve, reject) {
         const filter = 'Volume id:';
-        exec(`isoinfo -d -i /dev/sr0 | grep "${filter}"`, function (err, stdout, stderr) {
+        exec(`isoinfo -d -i /dev/sr0 | grep "${filter}"`, function (err, stdout) {
             if (err) {
                 reject(err);
             }
 
-            var name = (stdout || '').replace(filter, '').trim();
+            const name = (stdout || '').replace(filter, '').trim();
 
             resolve(name);
         });
@@ -100,7 +99,7 @@ function getVolumeName(): Promise<string> {
 
 function openDrive(): Promise<void> {
     return new Promise(function (resolve, reject) {
-        exec('eject', function (err, _, __) {
+        exec('eject', function (err) {
             if (err) {
                 reject(err);
             }
@@ -115,7 +114,7 @@ function waitForDrive(): Promise<void> {
 
     return new Promise(function (resolve, reject) {
         let running = false;
-        var interval = setInterval(function () {
+        const interval = setInterval(function () {
             if (running) return;
 
             running = true;
@@ -134,56 +133,49 @@ function waitForDrive(): Promise<void> {
     });
 }
 
-async function runProgram(): Promise<void> {
-    const outputDir = '/data/mpg';
+export class Ripper {
+    public async run(): Promise<void> {
+        const outputDir = '/data/mpg';
 
-    var exit = false;
+        let exit = false;
 
-    // process.on('SIGINT', function () {
-    //     console.log('Exiting...please wait.');
-    //     exit = true;
-    // });
-
-    // Create output folder if it doesn't exist
-    if (!existsSync(outputDir)) {
-        console.log('Creating output directory.');
-        mkdirSync(outputDir);
-    }
-
-    let attempt = 0;
-
-    while (!exit) {
-        exit = true;
-        try {
-            await waitForDrive();
-            console.log('Drive is ready for ripping.');
-
-            const volumeName = await getVolumeName();
-            const outputPath = join(outputDir, `${volumeName}.mpg`);
-            console.log(`Creating MPG at: '${outputPath}'.`);
-
-            if (existsSync(outputPath)) {
-                console.log('File already exists. Deleting...');
-                unlinkSync(outputPath);
-            }
-
-            const success = await createMpg(outputPath);
-            if (success) {
-                console.log(`Success: Finished creating MPG.`);
-                await delay(1000);
-                // TODO: Notify other process of MPG image
-                console.log('Ejecting DVD drive.');
-                await openDrive();
-            } else {
-                console.log(`Failed: Finished creating MPG.`);
-            }
-        } catch (error) {
-            console.error(error);
-            exit = true;
+        // Create output folder if it doesn't exist
+        if (!existsSync(outputDir)) {
+            console.log('Creating output directory.');
+            mkdirSync(outputDir);
         }
 
-        await delay(30000);
+        while (!exit) {
+            exit = true;
+            try {
+                await waitForDrive();
+                console.log('Drive is ready for ripping.');
+
+                const volumeName = await getVolumeName();
+                const outputPath = join(outputDir, `${volumeName}.mpg`);
+                console.log(`Creating MPG at: '${outputPath}'.`);
+
+                if (existsSync(outputPath)) {
+                    console.log('File already exists. Deleting...');
+                    unlinkSync(outputPath);
+                }
+
+                const success = await createMpg(outputPath);
+                if (success) {
+                    console.log(`Success: Finished creating MPG.`);
+                    await delay(1000);
+                    // TODO: Notify other process of MPG image
+                    console.log('Ejecting DVD drive.');
+                    await openDrive();
+                } else {
+                    console.log(`Failed: Finished creating MPG.`);
+                }
+            } catch (error) {
+                console.error(error);
+                exit = true;
+            }
+
+            await delay(30000);
+        }
     }
 }
-
-runProgram();
