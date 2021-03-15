@@ -131,6 +131,10 @@ export class Ripper {
 
                 running = true;
 
+                if (!existsSync(this.device)) {
+                    return;
+                }
+
                 this.getDriveStatus()
                     .then((status: DriveStatus) => {
                         switch (status) {
