@@ -4,8 +4,9 @@ volumes:
 services:
   frontend:
     restart: always
-    build: ./frontend
+    image: balenablocks/browser:raspberrypi3-64
     privileged: true
+    network_mode: host
     depends_on:
       - ripper
   ripper:
