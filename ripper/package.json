@@ -12,7 +12,8 @@
         "start": "npm run serve"
     },
     "dependencies": {
-        "express": "^4.17.1"
+        "express": "^4.17.1",
+        "rxjs": "^6.6.6"
     },
     "devDependencies": {
         "@types/express": "^4.17.11",
