@@ -17,27 +17,27 @@ export class Ripper {
     );
 
     constructor(
-        private readonly device: string = '/dev/sr0',
-        private readonly outputDirectory: string = '/data/mpg',
-    ) {}
+        private readonly device: string,
+        private readonly outputDirectory: string,
+    ) { }
 
     public delay(ms: number): Promise<void> {
-        return new Promise(function (resolve) {
+        return new Promise((resolve) => {
             setTimeout(resolve, ms);
         });
     }
-    
+
     public createMpg(outputPath: string): Promise<boolean> {
-        return new Promise(function (resolve, reject) {
+        return new Promise((resolve, reject) => {
             console.log('Starting mplayer...');
             const mplayer = spawn('/usr/bin/mplayer', ['-dumpstream', 'dvd://', '-nocache', '-noidx', '-dumpfile', outputPath]);
-    
+
             // If dd doesn't return data in 10s, kill it
-            const timeout = setTimeout(function () {
+            const timeout = setTimeout(() => {
                 console.log('Command timed out...killing.');
                 mplayer.kill();
             }, 30_000);
-    
+
             mplayer.stdout.on('data', (data: Buffer | string) => {
                 clearTimeout(timeout);
                 if (Buffer.isBuffer(data)) {
@@ -46,7 +46,7 @@ export class Ripper {
                     console.log(data);
                 }
             });
-    
+
             mplayer.stderr.on('data', (data: Buffer | string) => {
                 clearTimeout(timeout);
                 if (Buffer.isBuffer(data)) {
@@ -55,13 +55,13 @@ export class Ripper {
                     console.log(data);
                 }
             });
-    
+
             mplayer.on('error', (error) => {
                 clearTimeout(timeout);
                 console.log(`mplayer error: ${error.message}`);
                 reject(error);
             });
-    
+
             mplayer.on('close', code => {
                 clearTimeout(timeout);
                 console.log(`mplayer exited with code ${code}`);
@@ -69,16 +69,16 @@ export class Ripper {
             });
         });
     }
-    
+
     public getDriveStatus(): Promise<DriveStatus> {
-        return new Promise<DriveStatus>(function (resolve, reject) {
-            exec(`setcd -i ${this.device}`, function (err, stdout) {
+        return new Promise<DriveStatus>((resolve, reject) => {
+            exec(`setcd -i ${this.device}`, (err, stdout) => {
                 if (err) {
                     reject(err);
                 }
-    
+
                 const status = stdout || '';
-    
+
                 if (status.indexOf('CD tray is open') !== -1) {
                     resolve(DriveStatus.Open);
                 } else if (status.indexOf('Drive is not ready') !== -1) {
@@ -93,43 +93,44 @@ export class Ripper {
             });
         });
     }
-    
+
     public getVolumeName(): Promise<string> {
-        return new Promise(function (resolve, reject) {
+        return new Promise((resolve, reject) => {
             const filter = 'Volume id:';
-            exec(`isoinfo -d -i ${this.device} | grep "${filter}"`, function (err, stdout) {
+            exec(`isoinfo -d -i ${this.device} | grep "${filter}"`, (err, stdout) => {
                 if (err) {
                     reject(err);
                 }
-    
+
                 const name = (stdout || '').replace(filter, '').trim();
-    
+
                 resolve(name);
             });
         });
     }
-    
+
     public openDrive(): Promise<void> {
-        return new Promise(function (resolve, reject) {
-            exec('eject', function (err) {
+        return new Promise((resolve, reject) => {
+            exec('eject', (err) => {
                 if (err) {
                     reject(err);
                 }
-    
+
                 resolve();
             });
         });
     }
-    
+
     public waitForDrive(): Promise<void> {
         const delay = 5000;
-    
-        return new Promise(function (resolve, reject) {
+
+        return new Promise((resolve, reject) => {
             let running = false;
-            const interval = setInterval(function () {
+            const interval = setInterval(() => {
                 if (running) return;
-    
+
                 running = true;
+
                 this.getDriveStatus()
                     .then((status: DriveStatus) => {
                         if (status == DriveStatus.Ready) {

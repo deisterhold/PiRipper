@@ -23,6 +23,9 @@ COPY tsconfig.json tsconfig.json
 # Copy typescript source
 COPY ./src ./src
 
+# Copy HTML source
+COPY ./html ./html
+
 # Transpile typescript
 RUN npm run build
 
