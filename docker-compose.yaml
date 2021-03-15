@@ -16,5 +16,7 @@ services:
       - '/dev/sr0:/dev/sr0'
       - '/dev/cdrom:/dev/cdrom'
       - '/dev/dvd:/dev/dvd'
+    ports:
+      - '80'
     volumes:
       - 'images:/data'

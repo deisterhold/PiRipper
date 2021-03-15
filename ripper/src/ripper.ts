@@ -133,9 +133,14 @@ export class Ripper {
 
                 this.getDriveStatus()
                     .then((status: DriveStatus) => {
-                        if (status == DriveStatus.Ready) {
-                            clearInterval(interval);
-                            resolve();
+                        switch (status) {
+                            case DriveStatus.Ready:
+                                clearInterval(interval);
+                                resolve();
+                                break;
+                            case DriveStatus.Empty:
+                                this.openDrive();
+                                break;
                         }
                     })
                     .catch(reject)
