@@ -1,7 +1,7 @@
-import { Ripper } from './server';
-import { app } from './app';
+import { Ripper } from './ripper';
+import { app } from './server';
 
-const port = process.env.port || 8080;
+const port = process.env.port || 80;
 const ripper = new Ripper();
 
 app.listen(port, function () {
