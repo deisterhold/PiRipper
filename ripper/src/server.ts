@@ -7,7 +7,7 @@ export const server = createServer(app);
 const io = new SocketServer(server, {});
 
 app.get('/', (req, res) => {
-    const index = path.join(__dirname, '..', 'html', 'index.html');
+    const index = path.normalize('../html/index.html');
 
     res.sendFile(index);
 });
