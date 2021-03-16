@@ -4,7 +4,7 @@ import path from 'path';
 export const app = express();
 
 app.get('/', (req, res) => {
-    const index = path.normalize('../html/index.html');
+    const index = path.resolve(__dirname, '../html/index.html');
 
     res.sendFile(index);
 });
