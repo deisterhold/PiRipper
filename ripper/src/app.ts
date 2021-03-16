@@ -1,9 +1,12 @@
 import express from 'express';
+import path from 'path';
 
 export const app = express();
 
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + 'html/index.html');
+    const index = path.normalize('../html/index.html');
+
+    res.sendFile(index);
 });
 
 app.get('/api', (req, res) => {
